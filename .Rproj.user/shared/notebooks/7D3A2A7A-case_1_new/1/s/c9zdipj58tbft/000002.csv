@@ -1,0 +1,1 @@
+"0","plot(log(engel),xlab = ""log(Income)"",ylab = ""log(foodexp)"")"

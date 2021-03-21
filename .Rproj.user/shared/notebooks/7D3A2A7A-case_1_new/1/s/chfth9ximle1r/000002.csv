@@ -1,0 +1,4 @@
+"0","par(mfrow = c(1,2))"
+"0","income <- engel$income"
+"0","foodexp <- engel$foodexp"
+"0","hist(income)"

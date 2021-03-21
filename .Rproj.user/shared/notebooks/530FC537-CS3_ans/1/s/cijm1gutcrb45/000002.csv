@@ -1,0 +1,6 @@
+"0","```r
+change %>% 
+  group_by(gender) %>%  
+  # n() returns the count of rows = data points 
+  summarise(n(),mean(nchange),mean(periods_income))
+```"

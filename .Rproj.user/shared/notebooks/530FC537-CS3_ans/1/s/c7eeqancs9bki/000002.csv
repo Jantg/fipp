@@ -1,0 +1,32 @@
+"0","```r
+# when converting factor coded dummy to numeric it becomes (1,2)
+# so subtract 1 to make those to (0,1).
+credit_lm <- lm((as.numeric(default)-1)~.,data = credit)
+summary(credit_lm)
+```"
+"1","
+Call:
+lm(formula = (as.numeric(default) - 1) ~ ., data = credit)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-0.6000 -0.3094 -0.2239  0.5555  0.9177 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(>|t|)    
+(Intercept)      0.307250   0.134380   2.286 0.022440 *  
+amount           0.050051   0.010758   4.652 3.73e-06 ***
+duration        -0.003226   0.001284  -2.512 0.012169 *  
+foreignforeign   0.172300   0.075212   2.291 0.022180 *  
+genderwoman      0.006692   0.045598   0.147 0.883345    
+job2            -0.028101   0.097270  -0.289 0.772723    
+job3            -0.032995   0.103610  -0.318 0.750208    
+ownerhome_owner -0.109645   0.031782  -3.450 0.000584 ***
+singlesingle    -0.065779   0.042778  -1.538 0.124447    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.4469 on 991 degrees of freedom
+Multiple R-squared:  0.0577,	Adjusted R-squared:  0.05009 
+F-statistic: 7.585 on 8 and 991 DF,  p-value: 7.079e-10
+"

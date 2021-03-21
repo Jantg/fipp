@@ -1,0 +1,3 @@
+"0","engel_table <- cbind(summary(engel$income),summary(engel$foodexp))"
+"0","colnames(engel_table) <- c(""Income"",""Food Expenditure"")"
+"0","kable(engel_table)"

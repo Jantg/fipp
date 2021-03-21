@@ -1,0 +1,5 @@
+"0","```r
+AIC_mat <- AIC(credit_lm,credit_logit,credit_probit)[,2,drop = FALSE]
+BIC_mat <- BIC(credit_lm,credit_logit,credit_probit)[,2,drop = FALSE]
+kable(cbind(AIC_mat,BIC_mat))
+```"

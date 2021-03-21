@@ -1,0 +1,35 @@
+"0","```r
+credit_probit <- glm(default~.,data = credit,family = binomial(link = \"probit\"))
+summary(credit_probit)
+```"
+"1","
+Call:
+glm(formula = default ~ ., family = binomial(link = \"probit\"), 
+    data = credit)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-1.3935  -0.8518  -0.7064   1.2699   2.1898  
+
+Coefficients:
+                 Estimate Std. Error z value Pr(>|z|)    
+(Intercept)     -0.740792   0.447479  -1.655 0.097828 .  
+amount           0.140415   0.031345   4.480 7.48e-06 ***
+duration        -0.010192   0.003969  -2.568 0.010225 *  
+foreignforeign   0.738905   0.293372   2.519 0.011780 *  
+genderwoman      0.008290   0.134782   0.062 0.950956    
+job2            -0.057860   0.295846  -0.196 0.844942    
+job3            -0.055063   0.313923  -0.175 0.860762    
+ownerhome_owner -0.316354   0.093145  -3.396 0.000683 ***
+singlesingle    -0.204559   0.128131  -1.596 0.110380    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 1221.7  on 999  degrees of freedom
+Residual deviance: 1162.4  on 991  degrees of freedom
+AIC: 1180.4
+
+Number of Fisher Scoring iterations: 5
+"

@@ -1,0 +1,17 @@
+"0","```r
+# now you see why %>% is superior to regular way of calling a function
+# in some situation. Here, it is essentially doing:
+# change$gender <- as.factor(change$gender); levels(change$gender) <- list(women = \"1\",men = \"0\")
+# for each dummy/categorical columns
+change <- change %>% 
+  mutate(gender = gender %>% 
+           as.factor %>% 
+           recode_factor(\"0\" = \"man\",\"1\" = \"woman\"),
+         occupation = occupation %>% 
+           as.factor %>%
+            recode_factor(\"0\" = \"blue\",\"1\" = \"white\"),
+          median_wage = median_wage %>% 
+           as.factor
+           )
+head(change)
+```"

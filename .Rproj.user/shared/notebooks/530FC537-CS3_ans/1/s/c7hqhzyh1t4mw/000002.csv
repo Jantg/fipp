@@ -1,0 +1,8 @@
+"0","```r
+change %>% 
+  select(- nchange) %>%
+    ggpairs(mapping = aes(color = gender),
+            diag = list(continuous = wrap(\"densityDiag\",alpha = 0.3)),
+            lower = \"blank\",
+            upper = list(combo =\"box\"),progress = FALSE) 
+```"

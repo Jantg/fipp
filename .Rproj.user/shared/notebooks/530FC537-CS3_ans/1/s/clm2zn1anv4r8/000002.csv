@@ -1,0 +1,71 @@
+"0","```r
+model2 <- glm.nb(nchange~.-age-periods_income+poly(age,degree = 2,raw = TRUE)+poly(periods_income,degree =3,raw = TRUE),data = change)
+summary(model2)
+```"
+"1","
+Call:
+glm.nb(formula = nchange ~ . - age - periods_income + poly(age, 
+    degree = 2, raw = TRUE) + poly(periods_income, degree = 3, 
+    raw = TRUE), data = change, init.theta = 12.59949261, link = log)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-2.3473  -1.1744  -0.1301   0.4011   3.8005  
+
+Coefficients:
+                                                Estimate
+(Intercept)                                    0.8637019
+genderwoman                                   -0.2262942
+median_wage2                                  -0.0063854
+median_wage3                                  -0.1859359
+median_wage4                                  -0.2206127
+median_wage5                                  -0.2159093
+occupationwhite                               -0.1664138
+poly(age, degree = 2, raw = TRUE)1            -0.0276789
+poly(age, degree = 2, raw = TRUE)2             0.0001839
+poly(periods_income, degree = 3, raw = TRUE)1 -0.1065413
+poly(periods_income, degree = 3, raw = TRUE)2  0.0563964
+poly(periods_income, degree = 3, raw = TRUE)3 -0.0037430
+                                              Std. Error z value
+(Intercept)                                    0.6248492   1.382
+genderwoman                                    0.0487796  -4.639
+median_wage2                                   0.0601165  -0.106
+median_wage3                                   0.0674655  -2.756
+median_wage4                                   0.0732067  -3.014
+median_wage5                                   0.0826446  -2.613
+occupationwhite                                0.0452686  -3.676
+poly(age, degree = 2, raw = TRUE)1             0.0391925  -0.706
+poly(age, degree = 2, raw = TRUE)2             0.0006222   0.296
+poly(periods_income, degree = 3, raw = TRUE)1  0.0902949  -1.180
+poly(periods_income, degree = 3, raw = TRUE)2  0.0132599   4.253
+poly(periods_income, degree = 3, raw = TRUE)3  0.0005732  -6.530
+                                              Pr(>|z|)    
+(Intercept)                                   0.166893    
+genderwoman                                   3.50e-06 ***
+median_wage2                                  0.915410    
+median_wage3                                  0.005851 ** 
+median_wage4                                  0.002582 ** 
+median_wage5                                  0.008988 ** 
+occupationwhite                               0.000237 ***
+poly(age, degree = 2, raw = TRUE)1            0.480046    
+poly(age, degree = 2, raw = TRUE)2            0.767564    
+poly(periods_income, degree = 3, raw = TRUE)1 0.238030    
+poly(periods_income, degree = 3, raw = TRUE)2 2.11e-05 ***
+poly(periods_income, degree = 3, raw = TRUE)3 6.56e-11 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for Negative Binomial(12.5995) family taken to be 1)
+
+    Null deviance: 2995.9  on 2221  degrees of freedom
+Residual deviance: 2452.4  on 2210  degrees of freedom
+AIC: 6336.2
+
+Number of Fisher Scoring iterations: 1
+
+
+              Theta:  12.60 
+          Std. Err.:  3.90 
+
+ 2 x log-likelihood:  -6310.227 
+"

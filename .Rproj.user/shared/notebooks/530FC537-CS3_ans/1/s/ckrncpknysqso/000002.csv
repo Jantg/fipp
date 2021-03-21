@@ -1,0 +1,5 @@
+"0","```r
+model1bic <- matrix(BIC(model1),dimnames = list(\"BIC\",\"model1\"))
+model2bic <- matrix(BIC(model2),dimnames = list(\"BIC\",\"model2\"))
+kable(cbind(model1bic,model2bic))
+```"

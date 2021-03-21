@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1610621110102.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3277183845",
+    "id" : "E614288D",
+    "lastKnownWriteTime" : 1612712785,
+    "last_content_update" : 1612712785171,
+    "path" : "~/baRpkgs/trunk/fipp/R/fipp.R",
+    "project_path" : "R/fipp.R",
+    "properties" : {
+        "cursorPosition" : "381,66",
+        "scrollLine" : "357"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,413 @@
+library("fipp")
+library("magrittr")
+duniform <- function(x, max, log = FALSE) {
+    p <- ifelse(x < max, 1/max, 0)
+    if (log) {
+        p <- log(p)
+    }
+    p
+}
+
+Settings <- list(type = c("static","DPM", "dynamic"),
+                 Type = c("`static MFM`", "DPM", "`dynamic MFM`"),
+                 alpha = c(NA, 1/3, 2/5),
+                 gamma = c(1, NA, NA),
+                 maxK = c(30, 200, 200),
+                 K = c("duniform", NA, "dbnb"),
+                 K_pars = list(list(max = 30),
+                               NULL,
+                               list(mu = 1, a = 4, b = 3)))
+                       
+## Figure 1
+maxKplus <- 30
+N <- 100
+
+FILE <- "Nclusters.rda"
+if (file.exists(FILE)) {
+    load(FILE)
+} else {
+    Nclusters <- lapply(1:3, function(i) {
+        nClusters(seq_len(maxKplus), N = N, type = Settings$type[i],
+                  gamma = Settings$gamma[i], alpha = Settings$alpha[i],
+                  maxK = Settings$maxK[i])
+    })
+    save(Nclusters, file = FILE)
+}
+
+probability_Kplus <- lapply(1:3, function(i)
+    Nclusters[[i]](get(Settings$K[[i]]), Settings$K_pars[[i]]))
+probability_K <- lapply(1:3, function(i)
+    tryCatch(do.call(get(Settings$K[[i]]), c(list(x = seq_len(maxKplus) - 1), Settings$K_pars[[i]])),
+             error = function(e) rep(NA, maxKplus)))
+
+figure1 <- data.frame(number = seq_len(maxKplus),
+                      type = rep(Settings$Type, each = maxKplus),
+                      parameter = rep(ifelse(is.na(Settings$gamma), paste0("alpha == ", round(Settings$alpha, digits = 2)),
+                                             paste0("gamma == ", Settings$gamma)),
+                                      each = maxKplus),
+                      Kplus = unlist(probability_Kplus),
+                      K = unlist(probability_K))
+figure1 <- figure1 %>%
+    tidyr::pivot_longer(cols = K:Kplus, names_to = "variable", values_to = "Probability")
+figure1$type <- factor(figure1$type, c("DPM", "`static MFM`", "`dynamic MFM`"))
+fig1 <- ggplot2::ggplot(figure1, ggplot2::aes(number, Probability, fill = variable)) +
+    ggplot2::geom_bar(stat = "identity", position = "dodge", show.legend = FALSE) +
+        ggplot2::facet_grid(~ type + parameter,
+                            labeller = function(...) ggplot2::label_parsed(..., multi = FALSE)) +
+        ggplot2::theme_bw() +
+        ggplot2::scale_fill_grey(start = 0.8, end = 0.2) +
+        ggplot2::xlab(expression(K/K["+"]))
+print(fig1)
+ggplot2::ggsave("figure1.pdf", fig1, width = 8, height = 4)
+
+## Figure 2
+maxKplus <- 30
+gammas <- alphas <- c(10^(-4), seq(0.1, 1.0, 0.05), seq(1.2, 6, by = 0.2))
+
+FILE <- "KplusMetrics.rda"
+if (file.exists(FILE)) {
+    load(FILE)
+} else {
+    KplusMetrics <- lapply(seq_along(gammas), function(j) {
+        Nclusters <- lapply(1:3, function(i) {
+            nClusters(seq_len(maxKplus), N = N, type = Settings$type[i],
+                      gamma = if (is.na(Settings$gamma[i])) NA else gammas[j],
+                      alpha = if (is.na(Settings$alpha[i])) NA else alphas[j],
+                      maxK = Settings$maxK[i])
+        })
+        probability_Kplus <- lapply(1:3, function(i) {
+            p <- Nclusters[[i]](get(Settings$K[[i]]), Settings$K_pars[[i]])
+        if (isTRUE(Settings$K[[i]] == "duniform")) {
+            p <- ifelse(seq_along(p) > Settings$K_pars[[i]]$max, 0, p)
+        }
+            p
+        })
+        probability_K <- lapply(1:3, function(i)
+            tryCatch(do.call(get(Settings$K[[i]]), c(list(x = seq_len(maxKplus)), Settings$K_pars[[i]])),
+                     error = function(e) rep(NA, maxKplus)))
+        Means <- lapply(1:3, function(i) {
+            sum(probability_Kplus[[i]] * seq_len(maxKplus))
+        })
+        SDs <- lapply(1:3, function(i) {
+            sqrt(sum(probability_Kplus[[i]] * seq_len(maxKplus)^2) -
+                 sum(probability_Kplus[[i]] * seq_len(maxKplus))^2)
+        })
+        Q99 <- lapply(1:3, function(i) {
+            which(cumsum(probability_Kplus[[i]]) > 0.99)[1]
+        })
+        Homogeneity <- lapply(1:3, function(i)
+            probability_Kplus[[i]][1])
+        list(Means = Means,
+             SDs = SDs,
+             Q99 = Q99,
+             Homogeneity = Homogeneity)
+    })
+    save(KplusMetrics, file = FILE)
+}
+
+figure2 <- sapply(names(KplusMetrics[[1]]), function(var) sapply(KplusMetrics, "[[", var),
+                  simplify = FALSE)
+figure2 <- data.frame(variable = rep(names(figure2), sapply(figure2, length)),
+                      type = rep(rep(Settings$Type, length(gammas)), length(figure2)),
+                      value = unlist(figure2),
+                      parameter = rep(rep(alphas, each = length(Settings$Type)), length(figure2)))
+figure2$Setting <- factor(gsub("`", "", figure2$type),
+                          c("DPM", "static MFM", "dynamic MFM"))
+figure2$variable <- factor(figure2$variable, c("Means", "SDs", "Q99", "Homogeneity"),
+                           c("Prior mean", "Prior standard deviation", "Prior 99% quantile",
+                             "Prior probability for one cluster"))
+
+fig2 <- ggplot2::ggplot(figure2, ggplot2::aes(parameter, value, linetype = Setting, colour = Setting)) +
+    ggplot2::facet_wrap(~ variable, scales = "free_y") +
+    ggplot2::ylim(c(0, NA)) +        
+    ggplot2::theme_bw() +
+    ggplot2::geom_line() +
+    ggplot2::xlab(expression(alpha/gamma)) +
+    ggplot2::ylab("")
+print(fig2)
+ggplot2::ggsave("figure2.pdf", fig2, width = 8, height = 6)
+
+## Figure 3
+maxKplus <- 30
+N <- c(1:50, 10 * 6:59, 100 * 6:10)
+
+FILE <- "KplusMetricsN.rda"
+if (file.exists(FILE)) {
+    load(FILE)
+} else {
+    KplusMetricsN <- lapply(seq_along(N), function(j) {
+        Nclusters <- lapply(1:3, function(i) {
+            nClusters(seq_len(min(N[j], maxKplus)), N = N[j], type = Settings$type[i],
+                      gamma = Settings$gamma[i],
+                      alpha = Settings$alpha[i],
+                      maxK = Settings$maxK[i])
+        })
+        probability_Kplus <- lapply(1:3, function(i) {
+            p <- Nclusters[[i]](get(Settings$K[[i]]), Settings$K_pars[[i]])
+        if (isTRUE(Settings$K[[i]] == "duniform")) {
+            p <- ifelse(seq_along(p) > Settings$K_pars[[i]]$max, 0, p)
+        }
+            p
+        })
+        probability_K <- lapply(1:3, function(i)
+            tryCatch(do.call(get(Settings$K[[i]]), c(list(x = seq_len(maxKplus)), Settings$K_pars[[i]])),
+                     error = function(e) rep(NA, maxKplus)))
+        Means <- lapply(1:3, function(i) {
+            sum(probability_Kplus[[i]] * seq_len(min(N[j], maxKplus)))
+        })
+        SDs <- lapply(1:3, function(i) {
+            sqrt(sum(probability_Kplus[[i]] * seq_len(min(N[j], maxKplus))^2) -
+                 sum(probability_Kplus[[i]] * seq_len(min(N[j], maxKplus)))^2)
+        })
+        Q99 <- lapply(1:3, function(i) {
+            which(cumsum(probability_Kplus[[i]]) > 0.99)[1]
+        })
+        Homogeneity <- lapply(1:3, function(i)
+            probability_Kplus[[i]][1])
+        list(Means = Means,
+             SDs = SDs,
+             Q99 = Q99,
+             Homogeneity = Homogeneity)
+    })
+    save(KplusMetricsN, file = FILE)
+}
+
+figure3 <- sapply(names(KplusMetricsN[[1]]), function(var) sapply(KplusMetricsN, "[[", var),
+                  simplify = FALSE)
+figure3 <- data.frame(variable = rep(names(figure3), sapply(figure3, length)),
+                      type = rep(rep(Settings$Type, length(N)), length(figure3)),
+                      value = unlist(figure3),
+                      parameter = rep(rep(N, each = length(Settings$Type)), length(figure3)))
+figure3$Setting <- factor(gsub("`", "", figure3$type),
+                          c("DPM", "static MFM", "dynamic MFM"))
+figure3$variable <- factor(figure3$variable, c("Means", "SDs", "Q99", "Homogeneity"),
+                           c("Prior mean", "Prior standard deviation", "Prior 99% quantile",
+                             "Prior probability for one cluster"))
+
+fig3 <- ggplot2::ggplot(figure3, ggplot2::aes(parameter, value, linetype = Setting, colour = Setting)) +
+    ggplot2::facet_wrap(~ variable, scales = "free_y") +
+    ggplot2::ylim(c(0, NA)) +        
+    ggplot2::theme_bw() +
+    ggplot2::geom_line() +
+    ggplot2::xlab("N") +
+    ggplot2::ylab("")
+print(fig3)
+ggplot2::ggsave("figure3.pdf", fig3, width = 8, height = 6)
+
+## Figure 4
+Kplus <- seq(2, 8, 2)
+gammas <- alphas <- c(10^(-4), seq(0.1, 1.0, 0.05), seq(1.2, 6, by = 0.2))
+N <- 100
+logentropy <- function(n) {
+    log(n/N) + log(log(N) - log(n))
+}
+
+FILE <- "RelEntropy.rda"
+if (file.exists(FILE)) {
+    load(FILE)
+} else {
+    RelEntropy <- lapply(1:3, function(i) lapply(Kplus, function(k) {
+        lapply(seq_along(gammas), function(j) {
+            entropy <- fipp(logentropy, Kplus = k, N = N, type = Settings$type[i],
+                            maxK = Settings$maxK[i],
+                            gamma = if (is.na(Settings$gamma[i])) NA else gammas[j],
+                            alpha = if (is.na(Settings$alpha[i])) NA else alphas[j])
+            entr <- entropy(priorK = Settings$K[i],
+                            priorKparams = Settings$K_pars[[i]])
+            list(E = entr$E/log(k), SD = sqrt(entr$V/(log(k)^2)))
+        })
+    }))
+    save(RelEntropy, file = FILE)
+}
+figure4 <- data.frame(type = rep(Settings$Type, sapply(RelEntropy, function(x) length(unlist(x)))),
+                      Kplus = rep(rep(Kplus, each = 2 * length(gammas)), length(Settings$Type)),
+                      parameter = rep(rep(gammas, each = 2), length(Settings$Type) * length(Kplus)),
+                      value = unlist(RelEntropy),
+                      variable = rep(c("Mean", "Standard deviation"), length(Settings$Type) * length(Kplus) * length(gammas)))
+figure4$Setting <- factor(gsub("`", "", figure4$type),
+                          c("DPM", "static MFM", "dynamic MFM"))
+figure4$Kplus <- factor(figure4$Kplus)
+
+fig4 <- ggplot2::ggplot(figure4,
+                        ggplot2::aes(parameter, value, linetype = Kplus, colour = Kplus)) +
+    ggplot2::facet_grid(variable ~ Setting, scales = "free_y") +
+    ggplot2::ylim(c(0, NA)) +
+    ggplot2::geom_point(data = data.frame(variable = c("Mean", "Standard deviation"),
+                                          value = c(1, 0.3),
+                                          Kplus = factor(2),
+                                          Setting = factor(rep(c("static MFM", "dynamic MFM", "DPM"), each = 2),
+                                                           c("DPM", "static MFM", "dynamic MFM"))),
+                        x = NA, size = 0) + 
+    ggplot2::theme_bw() +
+    ggplot2::geom_line() +
+    ggplot2::xlab(expression(alpha/gamma)) +
+    ggplot2::ylab("Relative entropy") +
+    ggplot2::scale_linetype_discrete(expression(K["+"])) + 
+    ggplot2::scale_colour_discrete(expression(K["+"])) +
+    ggplot2::theme(legend.justification = c(0, 1), 
+                   legend.background = ggplot2::element_rect(fill = "transparent"),
+                   legend.box.background = ggplot2::element_rect(fill = "transparent", linetype = 0))
+ggplot2::ggsave("figure4.pdf", fig4, width = 8, height = 6)
+
+## Figure 5
+Kplus <- seq(2, 8, 2)
+prior_K <- c("duniform", "dgeom", "dbnb")
+prior_K_params <- list(list(max = 30), list(prob = 0.1), list(mu = 1, a = 4, b = 3))
+maxK <- c(30, 200, 200)
+alphas <- c(10^(-4), seq(0.1, 1.0, 0.05), seq(1.2, 6, by = 0.2))
+N <- 100
+
+FILE <- "RelEntropyK.rda"
+if (file.exists(FILE)) {
+    load(FILE)
+} else {
+    RelEntropyK <- lapply(1:3, function(i) lapply(Kplus, function(k) {
+        lapply(seq_along(alphas), function(j) {
+            entropy <- fipp(logentropy, Kplus = k, N = N, type = "dynamic",
+                            maxK = maxK[i],
+                            gamma = NA,
+                            alpha = alphas[j])
+            entr <- entropy(priorK = prior_K[i],
+                            priorKparams = prior_K_params[[i]],)
+            list(E = entr$E/log(k),SD = sqrt(entr$V/(log(k)^2)))
+        })
+    }))
+    save(RelEntropyK, file = FILE)
+}
+figure5 <- data.frame(type = rep(prior_K, sapply(RelEntropyK, function(x) length(unlist(x)))),
+                      Kplus = rep(rep(Kplus, each = 2 * length(alphas)), length(prior_K)),
+                      parameter = rep(rep(alphas, each = 2), length(prior_K) * length(Kplus)),
+                      value = unlist(RelEntropyK),
+                      variable = rep(c("Mean", "Standard deviation"), length(prior_K) * length(Kplus) * length(alphas)))
+figure5$Setting <- factor(figure5$type,
+                          prior_K, c("U[1, 30]", "Geo(0.1)", "BNB(1, 4, 3)"))
+figure5$Kplus <- factor(figure5$Kplus)
+
+fig5 <- ggplot2::ggplot(figure5,
+                        ggplot2::aes(parameter, value, linetype = Kplus, colour = Kplus)) +
+    ggplot2::facet_grid(variable ~ Setting, scales = "free_y") +
+    ggplot2::ylim(c(0, NA)) +
+    ggplot2::geom_point(data = data.frame(variable = c("Mean", "Standard deviation"),
+                                          value = c(1, 0.3),
+                                          Kplus = factor(2),
+                                          Setting = factor(rep(levels(figure5$Setting), each = 2),
+                                                           levels(figure5$Setting))),
+                        x = NA, size = 0) + 
+    ggplot2::theme_bw() +
+    ggplot2::geom_line() +
+    ggplot2::xlab(expression(alpha/gamma)) +
+    ggplot2::ylab("Relative entropy") +
+    ggplot2::scale_linetype_discrete(expression(K["+"])) + 
+    ggplot2::scale_colour_discrete(expression(K["+"])) +
+    ggplot2::theme(legend.justification = c(0, 1), 
+                   legend.background = ggplot2::element_rect(fill = "transparent"),
+                   legend.box.background = ggplot2::element_rect(fill = "transparent", linetype = 0))
+ggplot2::ggsave("figure5.pdf", fig5, width = 8, height = 6)
+
+## Figure 6
+maxKplus <- 30
+gammas <- alphas <- c(10^(-4), seq(0.1, 1.0, 0.05), seq(1.2, 6, by = 0.2))
+
+FILE <- "WeightedRelEntropy.rda"
+if (file.exists(FILE)) {
+    load(FILE)
+} else {
+    WeightedRelEntropy <- lapply(1:3, function(i) {
+        weightedRelEntropy <- lapply(seq_along(gammas), function(j) {
+            entropies <- lapply(seq_len(maxKplus), function(k) {
+                relentropy <- if (k == 1) {
+                                  list(E = 0, SD = 0)
+                              } else if (k == N) {
+                                  list(E = 1, SD = 0)
+                              } else {
+                                  entropy <- fipp(logentropy, Kplus = k, N = N, type = Settings$type[i],
+                                                  maxK = Settings$maxK[i],
+                                                  gamma = if (is.na(Settings$gamma[i])) NA else gammas[j],
+                                                  alpha = if (is.na(Settings$alpha[i])) NA else alphas[j])
+                                  entr <- entropy(priorK = Settings$K[i],
+                                                  priorKparams = Settings$K_pars[[i]])
+                                  list(E = entr$E/log(k),SD = sqrt(entr$V/(log(k)^2)))
+                              }
+                Nclusters <- nClusters(k, N = N, type = Settings$type[i],
+                                       gamma = if (is.na(Settings$gamma[i])) NA else gammas[j],
+                                       alpha = if (is.na(Settings$alpha[i])) NA else alphas[j],
+                                       maxK = Settings$maxK[i])
+                probability_Kplus <- Nclusters(get(Settings$K[[i]]), Settings$K_pars[[i]])
+                unlist(relentropy) * probability_Kplus
+            })
+            sapply(c("E", "SD"), function(var) sapply(entropies, "[[", var), simplify = FALSE)
+        })
+        weightedRelEntropy             
+    })
+    save(WeightedRelEntropy, file = FILE)
+}
+
+WeightedRelEntropy <- lapply(WeightedRelEntropy, lapply, lapply, sum)
+figure6 <- data.frame(type = rep(Settings$Type, sapply(WeightedRelEntropy, function(x) length(unlist(x)))),
+                      parameter = rep(rep(gammas, each = 2), length(Settings$Type)), 
+                      value = unlist(WeightedRelEntropy),
+                      variable = rep(c("Mean", "Standard deviation"), length(gammas) * length(Settings$Type)))
+figure6$Setting <- factor(gsub("`", "", figure6$type),
+                          c("DPM", "static MFM", "dynamic MFM"))
+fig6 <- ggplot2::ggplot(figure6,
+                        ggplot2::aes(parameter, value, linetype = Setting, colour = Setting)) +
+    ggplot2::facet_wrap(~ variable, scales = "free_y") +
+    ggplot2::ylim(c(0, NA)) +        
+    ggplot2::theme_bw() +
+    ggplot2::geom_line() +
+    ggplot2::xlab(expression(alpha/gamma)) +
+    ggplot2::ylab("")
+ggplot2::ggsave("figure6.pdf", fig6, width = 8, height = 4)
+
+## Figure 7
+Kplus <- seq(2, 8, 2)
+gammas <- alphas <- c(10^(-4), seq(0.1, 1.0, 0.05), seq(1.2, 6, by = 0.2))
+N <- 100
+logsingle <- function(n) log(n == 1)
+
+FILE <- "Singleton.rda"
+if (file.exists(FILE)) {
+    load(FILE)
+} else {
+    Singleton <- lapply(1:3, function(i) lapply(Kplus, function(k) {
+        lapply(seq_along(gammas), function(j) {
+            entropy <- fipp(logsingle, Kplus = k, N = N, type = Settings$type[i],
+                            maxK = Settings$maxK[i],
+                            gamma = if (is.na(Settings$gamma[i])) NA else gammas[j],
+                            alpha = if (is.na(Settings$alpha[i])) NA else alphas[j])
+            entr <- entropy(priorK = Settings$K[i],
+                            priorKparams = Settings$K_pars[[i]])
+            list(E = entr$E/log(k), SD = sqrt(entr$V/(log(k)^2)))
+        })
+    }))
+    save(Singleton, file = FILE)
+}
+figure7 <- data.frame(type = rep(Settings$Type, sapply(Singleton, function(x) length(unlist(x)))),
+                      Kplus = rep(rep(Kplus, each = 2 * length(gammas)), length(Settings$Type)),
+                      parameter = rep(rep(gammas, each = 2), length(Settings$Type) * length(Kplus)),
+                      value = unlist(Singleton),
+                      variable = rep(c("Mean", "Standard deviation"), length(Settings$Type) * length(Kplus) * length(gammas)))
+figure7$Setting <- factor(gsub("`", "", figure7$type),
+                          c("DPM", "static MFM", "dynamic MFM"))
+figure7$Kplus <- factor(figure7$Kplus)
+
+fig7 <- ggplot2::ggplot(figure7,
+                        ggplot2::aes(parameter, value, linetype = Kplus, colour = Kplus)) +
+    ggplot2::facet_grid(variable ~ Setting, scales = "free_y") +
+    ggplot2::ylim(c(0, NA)) +
+    ggplot2::geom_point(data = data.frame(variable = c("Mean", "Standard deviation"),
+                                          value = c(1, 0.3),
+                                          Kplus = factor(2),
+                                          Setting = factor(rep(c("static MFM", "dynamic MFM", "DPM"), each = 2),
+                                                           c("DPM", "static MFM", "dynamic MFM"))),
+                        x = NA, size = 0) + 
+    ggplot2::theme_bw() +
+    ggplot2::geom_line() +
+    ggplot2::xlab(expression(alpha/gamma)) +
+    ggplot2::ylab("Number of singleton groups") +
+    ggplot2::scale_linetype_discrete(expression(K["+"])) + 
+    ggplot2::scale_colour_discrete(expression(K["+"])) +
+    ggplot2::theme(legend.justification = c(0, 1), 
+                   legend.background = ggplot2::element_rect(fill = "transparent"),
+                   legend.box.background = ggplot2::element_rect(fill = "transparent", linetype = 0))
+ggplot2::ggsave("figure7.pdf", fig7, width = 8, height = 6)

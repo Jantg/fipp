@@ -1,0 +1,28 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1606229153255.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1898004388",
+    "id" : "C1693F71",
+    "lastKnownWriteTime" : 1612714093,
+    "last_content_update" : 1612714093,
+    "path" : "~/baRpkgs/trunk/fipp/vignettes/fippCrashCourse.Rmd",
+    "project_path" : "vignettes/fippCrashCourse.Rmd",
+    "properties" : {
+        "chunk_output_type" : "inline",
+        "cursorPosition" : "57,60",
+        "docOutlineVisible" : "0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled3"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
