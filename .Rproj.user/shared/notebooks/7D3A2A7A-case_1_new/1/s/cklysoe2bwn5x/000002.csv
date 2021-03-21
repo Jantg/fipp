@@ -1,8 +1,0 @@
-"0","newobs <- data.frame(income = 10000)"
-"0","# Model 1"
-"0","Mod1 <- predict(reg1,newobs)"
-"0","# Model 2"
-"0","Mod2 <- exp(predict(reg2,newobs))"
-"0","Modmat <- cbind(Mod1,Mod2)"
-"0","colnames(Modmat) <- c(""Model 1"",""Model 2"")"
-"0","kable(Modmat)"

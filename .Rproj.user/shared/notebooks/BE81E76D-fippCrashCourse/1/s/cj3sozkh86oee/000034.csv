@@ -1,8 +1,0 @@
-"0",""
-"0","# now with K-1 ~ Geom(0.3)"
-"0","KpstaticGeom <- pmfstatic2(priorK = dgeom, priorKparams = list(prob = 0.3))"
-"0","Geom3 <- sapply(1:30, function(k) dgeom(k-1, prob = 0.3))"
-"0",""
-"0","barplot(rbind(KpstaticGeom,Geom3), beside = TRUE,"
-"0","        main = ""static MFM (gamma = 1) with K-1 ~ Geom(.3) and N = 100"","
-"0","        xlab = ""K+/K"", ylab = ""probability"")"

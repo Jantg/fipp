@@ -1,3 +1,0 @@
-"0","library(knitr)"
-"0","engel <- read.csv(""engel.csv"")"
-"0","plot(engel)"

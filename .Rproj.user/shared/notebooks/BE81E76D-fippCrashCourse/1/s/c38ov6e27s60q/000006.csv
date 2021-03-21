@@ -1,7 +1,0 @@
-"0",""
-"0","# now with K-1 ~ Geom(0.3)"
-"0","KpdynamicGeom <- pmfdynamic(priorK = dgeom, priorKparams = list(prob = 0.3))"
-"0",""
-"0","barplot(rbind(KpdynamicGeom,Geom3), beside = TRUE,"
-"0","        main = ""dynamic MFM (alpha = 1) with K-1 ~ Geom(.3) and N = 100"","
-"0","        xlab = ""K+/K"", ylab = ""probability"")"

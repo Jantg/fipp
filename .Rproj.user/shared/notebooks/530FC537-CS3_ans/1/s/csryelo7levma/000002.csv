@@ -1,8 +1,0 @@
-"0","```r
-new_data <- list(age = 36,gender =\"woman\", median_wage = \"4\",
-                 occupation = \"white\",periods_income = 9)
-predict(nchange_nbreg_final,new_data,type = \"response\")
-```"
-"1","       1 
-1.456446 
-"

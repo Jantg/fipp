@@ -1,5 +1,0 @@
-"0","```r
-new_data_credit <- list(gender = \"woman\",single = \"single\",owner = \"not_home_owner\",
-                        foreign = \"foreign\",job = \"3\",duration = 18,
-                        amount = 3000)
-```"

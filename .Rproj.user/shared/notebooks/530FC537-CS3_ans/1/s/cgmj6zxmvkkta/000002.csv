@@ -1,4 +1,0 @@
-"0","```r
-predicted_probs <- matrix(c(predict(credit_lm,new_data_credit,type = \"response\"),predict(credit_logit,new_data_credit,type = \"response\"),predict(credit_probit,new_data_credit,type = \"response\")),ncol = 3, dimnames = list(\"Prob\",c(\"Linear Prob\",\"Logit\",\"Probit\")))
-kable(predicted_probs)
-```"

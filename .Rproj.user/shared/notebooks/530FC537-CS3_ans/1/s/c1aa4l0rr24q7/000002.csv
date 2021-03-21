@@ -1,5 +1,0 @@
-"0","```r
-nchange_table <- table(change$nchange)
-nchange_table <- nchange_table/sum(nchange_table)
-barplot(nchange_table, ylab = \"Probability\",xlab = \"Number of changes of employers\")
-```"

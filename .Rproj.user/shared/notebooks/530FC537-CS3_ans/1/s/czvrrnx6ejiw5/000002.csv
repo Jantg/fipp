@@ -1,5 +1,0 @@
-"0","```r
-model1aic <- matrix(AIC(model1),dimnames = list(\"AIC\",\"model1\"))
-model2aic <- matrix(AIC(model2),dimnames = list(\"AIC\",\"model2\"))
-kable(cbind(model1aic,model2aic))
-```"

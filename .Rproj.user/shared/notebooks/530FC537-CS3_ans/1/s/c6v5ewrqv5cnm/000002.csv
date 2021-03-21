@@ -1,7 +1,0 @@
-"0","```r
-par(mfrow = c(1,2))
-plot(sapply(1:30,function(x){new_data_credit$amount <- x;predict(credit_lm,new_data_credit,type = \"response\")}),xlab = \"The value of 'amount' column while keeping others fixed\", ylab = \"Predicted default probability\", type = \"o\",ylim = c(0.0,2.0), main = \"Linear Probability Model\")
-new_data_credit_2 <- new_data_credit
-new_data_credit_2$owner <- \"home_owner\"
-barplot(c(predict(credit_lm,new_data_credit,type = \"response\"), predict(credit_lm,new_data_credit_2,type = \"response\")),ylab = \"Predicted default probability\",names.arg = c(\"not home owner\",\"home owner\"),main = \"Linear Probability Model\")
-```"
